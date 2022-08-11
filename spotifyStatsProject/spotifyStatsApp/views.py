@@ -21,7 +21,7 @@ def get_auth_url(request, format=None):
     ''' returns the url that we should send the user to to login to spotify '''
     ''' in the spotify diagram, this is the first block in application column '''
 
-    scopes = 'user-read-recently-played user-top-read user-library-read user-follow-read user-read-private playlist-read-collaborative'
+    scopes = 'user-read-recently-played user-top-read user-library-read user-follow-read user-read-private playlist-read-collaborative user-read-private'
 
     # get the url that we can go to to authenticate our spotify application
     url = Request('GET', 'https://accounts.spotify.com/authorize', params={
@@ -64,7 +64,6 @@ def callback_to_get_token(request, format=None):
     new_token = SpotifyToken(access_token=access_token, token_type=token_type, expires_in=expires_in, refresh_token=refresh_token)
     new_token.save()
 
-    # TODO I LITERALLY JUST NEED TO FIGURE OUT HOW TO MAKE THIS REDIRECT WORK AND THEN I'M GOLDEN!
     return HttpResponseRedirect(FRONTEND_SERVER_LINK)
 
     
@@ -76,7 +75,26 @@ def get_most_recently_added_token(request):
     except:
         return Response({'error': 'no tokens in database'}, status.HTTP_404_NOT_FOUND)
 
-    token_serialized = SpotifyTokenSerializer(token)  # if my serializer isn't working, just make and use a serializer() function in the SpotifyToken model
-    token_json = JSONRenderer().render(token_serialized.data)
+    # token_serialized = SpotifyTokenSerializer(token)  # if my serializer isn't working, just make and use a serializer() function in the SpotifyToken model
+    # token_json = JSONRenderer().render(token_serialized.data)
 
-    return Response(token_json, status=status.HTTP_200_OK)
+    token_json_serialiezd = {
+        'id': token.id,
+        'created_at': token.created_at.strftime("%m/%d/%Y, %H:%M:%S"),
+        'refresh_token': token.refresh_token,
+        'access_token': token.access_token,
+        'token_type': token.token_type,
+        'expires_in': token.expires_in.strftime("%m/%d/%Y, %H:%M:%S")
+    }
+
+    # class SpotifyToken(models.Model):
+    #     also the id field
+    #     created_at = models.DateTimeField(auto_now_add=True)
+    #     refresh_token = models.CharField(max_length=150)
+    #     access_token = models.CharField(max_length=150)
+    #     token_type = models.CharField(max_length=50)
+    #     expires_in = models.DateTimeField()
+
+    #breakpoint()
+
+    return Response(token_json_serialiezd, status=status.HTTP_200_OK)
