@@ -36,56 +36,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   // or if there are no tokens in database the promise will return with status 404 and the only field in most_recent_token will be a field called error
   const access_token = most_recent_token['access_token']
   document.getElementById('display_token').innerHTML += access_token
-  document.getElementById('top_songs_or_artists').onclick = async () => {
-    const returned_data = await get_users_top_items("artists", 50, "long_term", access_token)
+  document.getElementById('top_artists').onclick = async () => await get_and_render_top_artists_data(access_token)
+  document.getElementById('top_songs').onclick = async () => await get_and_render_top_songs_data(access_token)
+  // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
+})
 
-    // this is an array of JS objects, each one is information on an artist 
-    // (some fields in these objects: "name", "popularity" [int representing popularity of artist worldwide], 'uri', 'external_urls' [object]
-    // "images" [ array of images of artist ], "followers" [int], "genres" [array], )
-    const artists = returned_data['items'] 
-    console.log(artists)
+async function get_and_render_top_songs_data(access_token) {
+  const returned_data = await get_users_top_items("tracks", 50, "long_term", access_token)
 
-    const top_n_genres = await get_top_n_genres(artists, 9) 
-    const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
+  // this is an array of JS objects, each one is information on a song
+  const songs = returned_data['items']
+  console.log(songs)
+}
 
-    const popularities = await get_artists_popularities(artists)  // returns an object that maps each artist to their popularity score
-    const popularitiesChartData = await generate_popularitiesChartData(popularities)
+async function get_and_render_top_artists_data(access_token)  {
+  const returned_data = await get_users_top_items("artists", 50, "long_term", access_token)
 
-    const names = Object.keys(popularities)  // just the names of top 50 artists
-    generate_top_fifty_list(names)
-    
-    // options allow us to hide labels
-    const popularities_chart_options = {
-      scales: {
-        y: {
-          beginAtZero: false
-        },
-        x: {
-          ticks: {
-            display: false
-          }
+  // this is an array of JS objects, each one is information on an artist 
+  const artists = returned_data['items'] 
+  console.log(artists)
+
+  const top_n_genres = await get_top_n_genres(artists, 9) 
+  const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
+
+  const popularities = await get_artists_popularities(artists)  // returns an object that maps each artist to their popularity score
+  const popularitiesChartData = await generate_popularitiesChartData(popularities)
+
+  const names = Object.keys(popularities)  // just the names of top 50 artists
+  generate_top_fifty_list(names)
+  
+  // options allow us to hide labels
+  const popularities_chart_options = {
+    scales: {
+      y: {
+        beginAtZero: false
+      },
+      x: {
+        ticks: {
+          display: false
         }
       }
     }
-    
-    // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
-    root.render(
-      <div>
-        <App />
-        <p> most common genres among your top 50 artists of all time: </p>
-        <div id="genres_polar_chart" style={{width:"500px", height:"500px"}}>
-          <Doughnut data={genresPolarChartData} /*updateMode="resize"*/ />
-        </div>
-        <br></br>
-        <p> global popularities of artists in your all time top 50: </p>
-        <div id="popularities_bar_chart" style={{width:"500px"}}>
-          <Bar options={popularities_chart_options} data={popularitiesChartData}/>
-        </div>
-      </div>
-    );
   }
-  // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
-})
+  
+  // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
+  root.render(
+    <div>
+      <App />
+      <p> most common genres among your top 50 artists of all time: </p>
+      <div id="genres_polar_chart" style={{width:"500px", height:"500px"}}>
+        <Doughnut data={genresPolarChartData} /*updateMode="resize"*/ />
+      </div>
+      <br></br>
+      <p> global popularities of artists in your all time top 50: </p>
+      <div id="popularities_bar_chart" style={{width:"500px"}}>
+        <Bar options={popularities_chart_options} data={popularitiesChartData}/>
+      </div>
+    </div>
+  );
+}
 
 
 async function get_auth_url() {
