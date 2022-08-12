@@ -7,7 +7,7 @@ import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'chart.js/auto';
-import { PolarArea, Doughnut, Bar } from "react-chartjs-2"
+import { PolarArea, Doughnut, Bar, Pie } from "react-chartjs-2"
 import PolarAreaChart from './charts/PolarArea'
 
 
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // most_recent_token will be a json object with fields id, created_at, refresh_token, access_token, token_type, expires_in
   // or if there are no tokens in database the promise will return with status 404 and the only field in most_recent_token will be a field called error
   const access_token = most_recent_token['access_token']
-  document.getElementById('display_token').innerHTML += access_token
+  //document.getElementById('display_token').innerHTML += access_token
   document.getElementById('top_artists').onclick = async () => await get_and_render_top_artists_data(access_token)
   document.getElementById('top_songs').onclick = async () => await get_and_render_top_songs_data(access_token)
   // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
@@ -48,16 +48,49 @@ async function get_and_render_top_songs_data(access_token) {
 
   // this is an array of JS objects, each one is information on a song
   const songs = returned_data['items']
+  console.log(songs)
 
   const artistsDonutChartData = await generate_artistsDonutChart(songs) 
   const artistsDonutChartOptions = {plugins: {legend: {display: false}}}
-  console.log(artistsDonutChartData)
+  
+  const popularities = await get_songs_popularities(songs)
+  const songPopularitiesChartData = await generate_popularitiesChartData(popularities)
+
+  const explicitPieChartData = await generate_explicitPieChartData(songs)
+
+  // options allow us to hide labels on popularity bar chart
+  const popularities_chart_options = {
+    scales: {
+      y: {
+        beginAtZero: false
+      },
+      x: {
+        ticks: {
+          display: false
+        }
+      }
+    }
+  }
+
+  const song_names_with_artists = Object.keys(popularities)
+  generate_top_fifty_list(song_names_with_artists)
+
   root.render(
     <div>
       <App />
       <p> artists' appearences in top 50 songs </p>
       <div id="artists_in_top_fifty_songs" style={{width:"300px", height:"300px"}}>
         <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
+      </div>
+      <br></br>
+      <p> global popularities of songs in your all time top 50: </p>
+      <div id="popularities_bar_chart" style={{width:"500px"}}>
+        <Bar options={popularities_chart_options} data={songPopularitiesChartData}/>
+      </div>
+      <br></br>
+      <p> explicitness </p>
+      <div id="explicitness" style={{width:"300px", height:"300px"}}>
+        <Pie data={explicitPieChartData}/>
       </div>
       <br></br>
     </div>
@@ -82,7 +115,7 @@ async function get_and_render_top_artists_data(access_token)  {
   const names = Object.keys(popularities)  // just the names of top 50 artists
   generate_top_fifty_list(names)
   
-  // options allow us to hide labels
+  // options allow us to hide labels on popularity bar chart
   const popularities_chart_options = {
     scales: {
       y: {
@@ -95,7 +128,6 @@ async function get_and_render_top_artists_data(access_token)  {
       }
     }
   }
-  
   // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
   root.render(
     <div>
@@ -223,6 +255,24 @@ async function get_artists_popularities(artists) {
   return popularities
 }
 
+async function get_songs_popularities(songs) {
+  // same as get_artists_popularities, only we have to extract the song name and the artists
+  let popularities = {} // will map a string with song artists and name to its popularity score
+  songs.forEach(song => {
+    let name = song["name"]
+    let popularity = Math.max(song["popularity"], 1) // if pop is 0, it won't show up at all on bar chart
+    let artists = song["artists"]
+    let label_string = ""
+    artists.forEach(artist => {
+      label_string += `${artist["name"]}, `
+    })
+    label_string = label_string.slice(0, label_string.length - 2)  // cut off the last two characters bc there will be an extra space and comma
+    label_string += ` - ${name}`
+    popularities[label_string] = popularity
+  })
+  return popularities
+}
+
 async function generate_artistsDonutChart(songs) {
   let artist_counts = {} // maps genre to number of times it occurs
   songs.forEach(song => {
@@ -259,11 +309,37 @@ async function generate_artistsDonutChart(songs) {
   return chart_data
 } 
 
+async function generate_explicitPieChartData(songs) {
+  let explicit_count = 0
+  let non_explicit_count = 0
+
+  songs.forEach(song => {
+    let explicit = song["explicit"] // boolean: T or F
+    if (explicit) {
+      explicit_count += 1
+    }
+    else {
+      non_explicit_count += 1
+    }
+  })
+
+  const chart_data = {
+    labels: ['Explicit', 'Clean'],
+    datasets: [{
+      label: 'Cleanness',
+      data: [explicit_count, non_explicit_count],
+      backgroundColor: ['rgb(255, 99, 132)', 'rgb(54, 162, 235)'],
+      hoverOffset: 4
+    }]
+  }
+  return chart_data
+}
+
 async function generate_popularitiesChartData(popularities) {
   const data = {
     labels: Object.keys(popularities),
     datasets: [{
-      label: 'Popularity Score',
+      label: 'Global Popularity Score',
       data: Object.values(popularities),
       // these next two arrays should have 50 entries (or else error will occur)
       backgroundColor: [
