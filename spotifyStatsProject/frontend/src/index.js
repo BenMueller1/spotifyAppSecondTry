@@ -42,14 +42,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 })
 
 async function get_and_render_top_songs_data(access_token) {
+  document.getElementById("top_fifty").innerHTML = "" // clear this out if we are switching from different data
+
   const returned_data = await get_users_top_items("tracks", 50, "long_term", access_token)
 
   // this is an array of JS objects, each one is information on a song
   const songs = returned_data['items']
-  console.log(songs)
+
+  const artistsDonutChartData = await generate_artistsDonutChart(songs) 
+  const artistsDonutChartOptions = {plugins: {legend: {display: false}}}
+  console.log(artistsDonutChartData)
+  root.render(
+    <div>
+      <App />
+      <p> artists' appearences in top 50 songs </p>
+      <div id="artists_in_top_fifty_songs" style={{width:"300px", height:"300px"}}>
+        <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
+      </div>
+      <br></br>
+    </div>
+  );
 }
 
 async function get_and_render_top_artists_data(access_token)  {
+  document.getElementById("top_fifty").innerHTML = "" // clear this out if we are switching from different data
+
   const returned_data = await get_users_top_items("artists", 50, "long_term", access_token)
 
   // this is an array of JS objects, each one is information on an artist 
@@ -205,6 +222,42 @@ async function get_artists_popularities(artists) {
   })
   return popularities
 }
+
+async function generate_artistsDonutChart(songs) {
+  let artist_counts = {} // maps genre to number of times it occurs
+  songs.forEach(song => {
+    let artists = song["artists"]
+    artists.forEach(artist => {
+      let name = artist['name']
+      if (artist_counts[name]) {
+        artist_counts[name] += 1
+      }
+      else {
+        artist_counts[name] = 1
+      }
+    })
+  })
+
+  // we will need to generate backroundColor array by using a for loop (bc we don't know how many artists there will be ahead of time)
+  // I randomly generate background colors
+  let backgroundColors = new Array(0)
+  for (let i = 0; i < Object.keys(artist_counts).length; i++) {
+    let random_red = Math.floor(Math.random() * 256)
+    let random_blue = Math.floor(Math.random() * 256)
+    let random_green = Math.floor(Math.random() * 256)
+    backgroundColors.push(`rgba(${random_red}, ${random_blue}, ${random_green}, 0.5)`)
+  }
+  const chart_data = {
+    labels: Object.keys(artist_counts),
+    datasets: [{
+      label: 'Appearences in top 50 songs',
+      data: Object.values(artist_counts),
+      backgroundColor: backgroundColors,
+      hoverOffset: 3
+    }]
+  } 
+  return chart_data
+} 
 
 async function generate_popularitiesChartData(popularities) {
   const data = {
