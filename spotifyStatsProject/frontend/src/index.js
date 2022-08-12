@@ -7,7 +7,7 @@ import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'chart.js/auto';
-import { PolarArea } from "react-chartjs-2"
+import { PolarArea, Doughnut, Bar } from "react-chartjs-2"
 import PolarAreaChart from './charts/PolarArea'
 
 
@@ -43,16 +43,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     // (some fields in these objects: "name", "popularity" [int representing popularity of artist worldwide], 'uri', 'external_urls' [object]
     // "images" [ array of images of artist ], "followers" [int], "genres" [array], )
     const artists = returned_data['items'] 
+    console.log(artists)
 
     const top_n_genres = await get_top_n_genres(artists, 9) 
     const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
     console.log(genresPolarChartData)
+
+    const popularities = await get_artists_popularities(artists)  // returns an object that maps each artist to their popularity score
+    const popularitiesChartData = await generate_popularitiesChartData(popularities)
+    // options allow us to hide labels
+    const popularities_chart_options = {
+      scales: {
+        y: {
+          beginAtZero: false
+        },
+        x: {
+          ticks: {
+            display: false
+          }
+        }
+      }
+    }
     // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
     root.render(
       <div>
         <App />
+        <p> most common genres among your top 50 artists of all time: </p>
         <div id="genres_polar_chart" style={{width:"500px", height:"500px"}}>
-          <PolarArea data={genresPolarChartData} /*updateMode="resize"*/ />
+          <Doughnut data={genresPolarChartData} /*updateMode="resize"*/ />
+        </div>
+        <br></br>
+        <p> global popularities of artists in your all time top 50: </p>
+        <div id="popularities_bar_chart" style={{width:"500px"}}>
+          <Bar options={popularities_chart_options} data={popularitiesChartData}/>
         </div>
       </div>
     );
@@ -159,10 +182,136 @@ async function generate_genresPolarChartData(top_n_genres) {
         'rgba(153, 0, 255, 0.5)',
         'rgba(0, 159, 34, 0.5)',
       ],
-      borderWidth: 1,
+      hoverOffset: 3,
     }]
   };
   return genresPolarChartData
 }
 
 
+async function get_artists_popularities(artists) {
+  let popularities = {} // maps artist name to popularity score
+  artists.forEach(artist => {
+    let name = artist['name']
+    let popularity = artist['popularity']
+    popularities[name] = popularity
+  })
+  return popularities
+}
+
+async function generate_popularitiesChartData(popularities) {
+  const data = {
+    labels: Object.keys(popularities),
+    datasets: [{
+      label: 'Popularity Score',
+      data: Object.values(popularities),
+      // these next two arrays should have 50 entries (or else error will occur)
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)',
+        'rgba(54, 162, 235, 0.2)',
+        'rgba(153, 102, 255, 0.2)',
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)'
+      ],
+      borderColor: [
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)',
+        'rgb(54, 162, 235)',
+        'rgb(153, 102, 255)',
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)'
+      ],
+      borderWidth:1
+    }]
+  };
+  return data
+}

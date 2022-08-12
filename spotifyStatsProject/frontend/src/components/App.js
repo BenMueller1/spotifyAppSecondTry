@@ -8,7 +8,7 @@ Chart.register(...registerables);
 function App() {
   return (
     <div id="app">
-      <p> most common genres among your top 50 artists of all time: </p>
+      <p> hi this is the main app component, in the future the charts will be child components of their chart wrappers which will be children of this App component </p>
     </div>
   );
 }
