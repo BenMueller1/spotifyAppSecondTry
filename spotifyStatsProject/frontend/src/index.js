@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './static/index.css';
 import App from './components/App';
 
+import PriorityQueue from './dataStructures/pq';
+
 import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -109,6 +111,10 @@ async function get_and_render_top_artists_data(access_token)  {
   const top_n_genres = await get_top_n_genres(artists, 9) 
   const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
 
+  const artists_ordered_by_follower_count = await get_artists_ordered_by_followers(artists)
+  const highestFollowerCountBarChartData = await generate_followerCountBarChartData(artists_ordered_by_follower_count, "top")
+  const lowestFollowerCountBarChartData = await generate_followerCountBarChartData(artists_ordered_by_follower_count, "bottom")
+
   const popularities = await get_artists_popularities(artists)  // returns an object that maps each artist to their popularity score
   const popularitiesChartData = await generate_popularitiesChartData(popularities)
 
@@ -116,7 +122,7 @@ async function get_and_render_top_artists_data(access_token)  {
   generate_top_fifty_list(names)
   
   // options allow us to hide labels on popularity bar chart
-  const popularities_chart_options = {
+  const bar_chart_options = {
     scales: {
       y: {
         beginAtZero: false
@@ -139,7 +145,17 @@ async function get_and_render_top_artists_data(access_token)  {
       <br></br>
       <p> global popularities of artists in your all time top 50: </p>
       <div id="popularities_bar_chart" style={{width:"500px"}}>
-        <Bar options={popularities_chart_options} data={popularitiesChartData}/>
+        <Bar options={bar_chart_options} data={popularitiesChartData}/>
+      </div>
+      <br></br>
+      <p> top 10 most followed in your top 50 artists </p>
+      <div id="follower_counts_bar_chart" style={{width:"500px"}}>
+        <Bar options={bar_chart_options} data={highestFollowerCountBarChartData}/>
+      </div>
+      <br></br>
+      <p> top 10 least followed in your top 50 artists </p>
+      <div id="follower_counts_bar_chart" style={{width:"500px"}}>
+        <Bar options={bar_chart_options} data={lowestFollowerCountBarChartData}/>
       </div>
     </div>
   );
@@ -336,117 +352,25 @@ async function generate_explicitPieChartData(songs) {
 }
 
 async function generate_popularitiesChartData(popularities) {
+  let backgroundColors = new Array(0)
+  let borderColors = new Array(0)
+  for (let i = 0; i < Object.keys(popularities).length; i++) {
+    let random_red = Math.floor(Math.random() * 256)
+    let random_blue = Math.floor(Math.random() * 256)
+    let random_green = Math.floor(Math.random() * 256)
+    backgroundColors.push(`rgba(${random_red}, ${random_blue}, ${random_green}, 0.5)`)
+    borderColors.push(`rgb(${random_red}, ${random_blue}, ${random_green})`)
+  }
+
   const data = {
     labels: Object.keys(popularities),
     datasets: [{
       label: 'Global Popularity Score',
       data: Object.values(popularities),
       // these next two arrays should have 50 entries (or else error will occur)
-      backgroundColor: [
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)',
-        'rgba(255, 205, 86, 0.2)',
-        'rgba(75, 192, 192, 0.2)',
-        'rgba(54, 162, 235, 0.2)',
-        'rgba(153, 102, 255, 0.2)',
-        'rgba(255, 99, 132, 0.2)',
-        'rgba(255, 159, 64, 0.2)'
-      ],
-      borderColor: [
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)',
-        'rgb(255, 205, 86)',
-        'rgb(75, 192, 192)',
-        'rgb(54, 162, 235)',
-        'rgb(153, 102, 255)',
-        'rgb(255, 99, 132)',
-        'rgb(255, 159, 64)'
-      ],
-      borderWidth:1
+      backgroundColor: backgroundColors,
+      borderColor: borderColors,
+      borderWidth: 1
     }]
   };
   return data
@@ -460,4 +384,65 @@ function generate_top_fifty_list(names) {
   names.forEach((name, i) => {
     ol.innerHTML += `<li key=${i+1}>${name}</li>`
   })
+}
+
+
+
+async function get_artists_ordered_by_followers(artists) {
+  // uses HEAPSORT to sort return an object of artist to follower count mapping that is in order
+  let ordered_by_followers = {}
+  var pQ = new PriorityQueue();
+  console.log(ordered_by_followers)
+  artists.forEach(artist => {
+    pQ.enqueue(artist['name'], artist['followers']['total'])
+  })
+  console.log(pQ.printPQueue())
+  while (!pQ.isEmpty()) {
+    let cur = pQ.dequeue()
+    let name = cur["element"]
+    let follower_count = cur["priority"]
+    ordered_by_followers[name] = follower_count
+    //console.log(ordered_by_followers)
+  } 
+  console.log(ordered_by_followers)
+  return ordered_by_followers
+}
+
+async function generate_followerCountBarChartData(artists_ordered_by_follower_count, bottom_or_top) {
+  // bottom_or_top could be "bottom" (meaning get the 10 least followed) or "top" (get the 10 most followed)
+  let artist_names = new Array(0)
+  if (bottom_or_top==="bottom") {
+    artist_names = Object.keys(artists_ordered_by_follower_count).slice(0, 10)
+  }
+  else {
+    artist_names = Object.keys(artists_ordered_by_follower_count).slice(40)
+  }
+  
+  let backgroundColors = new Array(0)
+  let borderColors = new Array(0)
+  for (let i = 0; i < artist_names.length; i++) {
+    let random_red = Math.floor(Math.random() * 256)
+    let random_blue = Math.floor(Math.random() * 256)
+    let random_green = Math.floor(Math.random() * 256)
+    backgroundColors.push(`rgba(${random_red}, ${random_blue}, ${random_green}, 0.5)`)
+    borderColors.push(`rgb(${random_red}, ${random_blue}, ${random_green})`)
+  }
+
+  let follower_counts = new Array(0)
+  artist_names.forEach(name => {
+    follower_counts.push(artists_ordered_by_follower_count[name])
+  })
+
+  const data = {
+    labels: artist_names.reverse(),
+    datasets: [{
+      label: 'Follower Count',
+      data: follower_counts.reverse(),
+      // these next two arrays should have 50 entries (or else error will occur)
+      backgroundColor: backgroundColors,
+      borderColor: borderColors,
+      borderWidth: 1
+    }]
+  };
+  return data
 }
