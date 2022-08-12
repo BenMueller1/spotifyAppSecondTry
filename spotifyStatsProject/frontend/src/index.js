@@ -6,9 +6,26 @@ import App from './components/App';
 import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
+import 'chart.js/auto';
+import { PolarArea } from "react-chartjs-2"
+import PolarAreaChart from './charts/PolarArea'
+
+
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
+
+
 
 const API_URL = "http://localhost:8000/api"  // this is the link to my api, update as needed (will need to update if I publish)
 const SPOTIFY_BASE_URL = "https://api.spotify.com/v1/me"
+
+var root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
 
 document.addEventListener('DOMContentLoaded', async () => {
   await get_auth_url()
@@ -27,7 +44,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // "images" [ array of images of artist ], "followers" [int], "genres" [array], )
     const artists = returned_data['items'] 
 
-    const top_n_genres = get_top_n_genres(artists, 10)
+    const top_n_genres = await get_top_n_genres(artists, 9) 
+    const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
+    console.log(genresPolarChartData)
+    // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
+    root.render(
+      <div>
+        <App />
+        <div id="genres_polar_chart" style={{width:"500px", height:"500px"}}>
+          <PolarArea data={genresPolarChartData} /*updateMode="resize"*/ />
+        </div>
+      </div>
+    );
   }
   // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
 })
@@ -35,12 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+
 
 
 
@@ -74,7 +97,7 @@ async function get_users_top_items(category, num_items, time_range, access_token
   return items
 }
 
-function get_top_n_genres(artists, n) {
+async function get_top_n_genres(artists, n) {
   // takes in the list of artists that is returned by spotify
   // returns an object with the most common n genres and the number of times they occur
 
@@ -117,3 +140,29 @@ function get_top_n_genres(artists, n) {
   console.log(top_n_genres)
   return top_n_genres
 }
+
+
+async function generate_genresPolarChartData(top_n_genres) {
+  const genresPolarChartData = {
+    labels: Object.keys(top_n_genres),
+    datasets: [{
+      label: 'Most Popular Genres from Top 50 Artists',
+      data: Object.values(top_n_genres),
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.5)',
+        'rgba(54, 162, 235, 0.5)',
+        'rgba(255, 206, 86, 0.5)',
+        'rgba(75, 192, 192, 0.5)',
+        'rgba(153, 102, 255, 0.5)',
+        'rgba(255, 159, 64, 0.5)',
+        'rgba(244, 192, 0, 0.5)',
+        'rgba(153, 0, 255, 0.5)',
+        'rgba(0, 159, 34, 0.5)',
+      ],
+      borderWidth: 1,
+    }]
+  };
+  return genresPolarChartData
+}
+
+
