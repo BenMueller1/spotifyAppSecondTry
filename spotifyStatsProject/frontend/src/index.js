@@ -47,10 +47,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const top_n_genres = await get_top_n_genres(artists, 9) 
     const genresPolarChartData = await generate_genresPolarChartData(top_n_genres)
-    console.log(genresPolarChartData)
 
     const popularities = await get_artists_popularities(artists)  // returns an object that maps each artist to their popularity score
     const popularitiesChartData = await generate_popularitiesChartData(popularities)
+
+    const names = Object.keys(popularities)  // just the names of top 50 artists
+    generate_top_fifty_list(names)
+    
     // options allow us to hide labels
     const popularities_chart_options = {
       scales: {
@@ -64,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     }
+    
     // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
     root.render(
       <div>
@@ -82,12 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
 })
-
-
-
-
-
-
 
 
 async function get_auth_url() {
@@ -314,4 +312,14 @@ async function generate_popularitiesChartData(popularities) {
     }]
   };
   return data
+}
+
+
+function generate_top_fifty_list(names) {
+  var names_div = document.getElementById("top_fifty")
+  names_div.innerHTML += '<ol id="top_fifty_list"></ol>'
+  var ol = document.getElementById("top_fifty_list")
+  names.forEach((name, i) => {
+    ol.innerHTML += `<li key=${i+1}>${name}</li>`
+  })
 }
