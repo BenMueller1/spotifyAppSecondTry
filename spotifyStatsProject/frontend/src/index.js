@@ -40,8 +40,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   //document.getElementById('display_token').innerHTML += access_token
   document.getElementById('top_artists').onclick = async () => await get_and_render_top_artists_data(access_token)
   document.getElementById('top_songs').onclick = async () => await get_and_render_top_songs_data(access_token)
+  document.getElementById('saved_tracks').onclick = async () => await get_and_render_saved_tracks_data(access_token)
   // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
 })
+
+async function get_and_render_saved_tracks_data(access_token) {
+  document.getElementById("top_fifty").innerHTML = "" // clear these out if switching from different data
+
+  const all_saved_tracks = await get_users_saved_tracks(access_token)
+  console.log(all_saved_tracks)
+
+  root.render(
+    <div>
+      <p>TODO</p>
+      <App />
+    </div>
+  )
+}
 
 async function get_and_render_top_songs_data(access_token) {
   document.getElementById("top_fifty").innerHTML = "" // clear this out if we are switching from different data
@@ -167,6 +182,48 @@ async function get_auth_url() {
   let spotify_login_link = document.getElementById('spotify_login')
   spotify_login_link.href = spotify_auth_url
 }
+
+
+async function get_users_saved_tracks(access_token) {
+  // to get all saved tracks, need to keep making api calls until there are no more 
+  // if offset is higher than the number of saved tracks it will return an empty array
+  //    once this happens we should return
+  const auth_code = "Bearer " +  access_token
+  const api_link = SPOTIFY_BASE_URL + `/tracks`
+
+  let offset = 0
+  let finished = false
+  let all_tracks = new Array(0)
+
+  while (!finished) {
+    const tracks = await axios.get(api_link, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': auth_code
+      },
+      params: {
+        "limit": 50,
+        "offset": offset
+      }
+    })
+    .then(response => response.data)
+    .then(response_data => response_data["items"])
+    .then(items => {
+      return items.map(item => item["track"])
+    })
+
+    if (tracks.length === 0) {
+      finished = true
+    }
+    else {
+      offset += 50
+      all_tracks.push(...tracks)
+    }
+  }
+  
+  return all_tracks
+}
+
 
 
 // NOTE: should probably move these to effect hooks in the root component (once I get these working & then make the root component)
