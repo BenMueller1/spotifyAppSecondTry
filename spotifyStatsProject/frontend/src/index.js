@@ -9,7 +9,7 @@ import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'chart.js/auto';
-import { PolarArea, Doughnut, Bar, Pie } from "react-chartjs-2"
+import { PolarArea, Doughnut, Bar, Pie, Radar } from "react-chartjs-2"
 import PolarAreaChart from './charts/PolarArea'
 
 
@@ -50,10 +50,24 @@ async function get_and_render_saved_tracks_data(access_token) {
   const all_saved_tracks = await get_users_saved_tracks(access_token)
   console.log(all_saved_tracks)
 
+  const explicitPieChartData = await generate_explicitPieChartData(all_saved_tracks)
+
+  const artistsDonutChartData = await generate_artistsDonutChart(all_saved_tracks, 3) 
+  const artistsDonutChartOptions = {plugins: {legend: {display: false}}}
+
   root.render(
     <div>
-      <p>TODO</p>
       <App />
+      <p> artists that appear 3 or more times </p>
+      <div id="artists_that_appear_n_times" style={{width:"300px", height:"300px"}}>
+        <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
+      </div>
+      <br></br>
+      <p> explicitness </p>
+      <div id="explicitness" style={{width:"300px", height:"300px"}}>
+        <Pie data={explicitPieChartData}/>
+      </div>
+      <br></br>
     </div>
   )
 }
@@ -67,7 +81,7 @@ async function get_and_render_top_songs_data(access_token) {
   const songs = returned_data['items']
   console.log(songs)
 
-  const artistsDonutChartData = await generate_artistsDonutChart(songs) 
+  const artistsDonutChartData = await generate_artistsDonutChart(songs, 0) 
   const artistsDonutChartOptions = {plugins: {legend: {display: false}}}
   
   const popularities = await get_songs_popularities(songs)
@@ -75,6 +89,10 @@ async function get_and_render_top_songs_data(access_token) {
 
   const explicitPieChartData = await generate_explicitPieChartData(songs)
 
+  const averages = await calculate_average_stats(access_token, songs)
+  const averagesRadarChartData = await generate_radarChartData(averages)
+  const averagesRadarChartOptions = {elements: {line: {borderWidth: 3}}, plugins: {legend: {display: false}}}
+  console.log(averages)
   // options allow us to hide labels on popularity bar chart
   const popularities_chart_options = {
     scales: {
@@ -95,6 +113,10 @@ async function get_and_render_top_songs_data(access_token) {
   root.render(
     <div>
       <App />
+      <p> average song stats </p>
+      <div id="average_stats" style={{width:"600px", height:"600px"}}>
+        <Radar data={averagesRadarChartData} options={averagesRadarChartOptions} />
+      </div>
       <p> artists' appearences in top 50 songs </p>
       <div id="artists_in_top_fifty_songs" style={{width:"300px", height:"300px"}}>
         <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
@@ -346,7 +368,8 @@ async function get_songs_popularities(songs) {
   return popularities
 }
 
-async function generate_artistsDonutChart(songs) {
+async function generate_artistsDonutChart(songs, cutoff) {
+  // cutoff is an int, only artists with >= cutoff appearences will be put in the chart
   let artist_counts = {} // maps genre to number of times it occurs
   songs.forEach(song => {
     let artists = song["artists"]
@@ -361,20 +384,27 @@ async function generate_artistsDonutChart(songs) {
     })
   })
 
+  let new_artist_counts = {}
+  Object.keys(artist_counts).forEach(artist => {
+    if (artist_counts[artist] >= cutoff) {
+      new_artist_counts[artist] = artist_counts[artist]
+    }
+  })
+
   // we will need to generate backroundColor array by using a for loop (bc we don't know how many artists there will be ahead of time)
   // I randomly generate background colors
   let backgroundColors = new Array(0)
-  for (let i = 0; i < Object.keys(artist_counts).length; i++) {
+  for (let i = 0; i < Object.keys(new_artist_counts).length; i++) {
     let random_red = Math.floor(Math.random() * 256)
     let random_blue = Math.floor(Math.random() * 256)
     let random_green = Math.floor(Math.random() * 256)
     backgroundColors.push(`rgba(${random_red}, ${random_blue}, ${random_green}, 0.5)`)
   }
   const chart_data = {
-    labels: Object.keys(artist_counts),
+    labels: Object.keys(new_artist_counts),
     datasets: [{
       label: 'Appearences in top 50 songs',
-      data: Object.values(artist_counts),
+      data: Object.values(new_artist_counts),
       backgroundColor: backgroundColors,
       hoverOffset: 3
     }]
@@ -502,4 +532,91 @@ async function generate_followerCountBarChartData(artists_ordered_by_follower_co
     }]
   };
   return data
+}
+
+
+async function calculate_average_stats(access_token, song_list) {
+  // returns average of all 9 stats
+  //    stats: acousticness, danceability, energy, instrumentalness, liveness, loudness, mode, speechiness, valence
+  //    these are all measured on a scale from 0.0 to 1.0 (except loudness, which is why I don't use it)
+  //    note: for mode, 1 is major and 0 is minor
+  // song_list: list of songs (we will need to use the ID field of each song in the api call)
+
+  const auth_code = "Bearer " +  access_token
+  const api_link_base = "https://api.spotify.com/v1/audio-features"   // will need to add each tracks ID for each call
+
+  let averages = {
+    "acousticness": new Array(0),
+    "danceability": new Array(0),
+    "energy": new Array(0),
+    "instrumentalness": new Array(0),
+    "liveness": new Array(0),
+    "mode": new Array(0),
+    "speechiness": new Array(0),
+    "valence": new Array(0)
+  }
+
+  let all_song_ids = ""
+
+  // does the arrow function have to be async?
+  song_list.forEach(song => {
+    let song_id = song["id"]
+    all_song_ids += song_id + ","
+  })
+  all_song_ids = all_song_ids.slice(0, -1) // bc there will be an extra comma on the end
+
+  await axios.get(api_link_base, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': auth_code
+    },
+    params: {
+      "ids": all_song_ids
+    }
+  })
+  .then(response => response.data["audio_features"])
+  .then(audio_features => {
+    audio_features.forEach(stats => {
+      averages["acousticness"].push(stats["acousticness"])
+      averages["danceability"].push(stats["danceability"])
+      averages["energy"].push(stats["energy"])
+      averages["instrumentalness"].push(stats["instrumentalness"])
+      averages["liveness"].push(stats["liveness"])
+      averages["mode"].push(stats["mode"])
+      averages["speechiness"].push(stats["speechiness"])
+      averages["valence"].push(stats["valence"])
+    })
+  })
+
+  // calculate and return average of each array
+  Object.keys(averages).forEach(stat => {
+    let avg = get_avg(averages[stat])
+    averages[stat] = Math.round(avg*100)/100  // this rounds to 2 decimal places
+  })
+
+  return averages
+}
+
+async function generate_radarChartData(dat) {
+  // dat is a json object
+  const graph_data = {
+    labels: Object.keys(dat),
+    datasets: [{
+      label: 'Average value',
+      data: Object.values(dat),
+      fill: true,
+      backgroundColor: 'rgba(30, 215, 96, 0.2)',
+      borderColor: 'rgb(30, 215, 96)',
+      pointBackgroundColor: 'rgb(30, 215, 96)',
+      pointBorderColor: '#fff',
+      pointHoverBackgroundColor: '#fff',
+      pointHoverBorderColor: 'rgb(30, 215, 96)'
+    }]
+  }
+  return graph_data
+}
+
+// helper function to compute average
+function get_avg(arr) {
+  return arr.reduce((a, b) => a + b, 0) / arr.length
 }
