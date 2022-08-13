@@ -55,9 +55,38 @@ async function get_and_render_saved_tracks_data(access_token) {
   const artistsDonutChartData = await generate_artistsDonutChart(all_saved_tracks, 3) 
   const artistsDonutChartOptions = {plugins: {legend: {display: false}}}
 
+  const averages = await calculate_averages_for_all_saved_tracks(access_token, all_saved_tracks)
+  const averagesRadarChartData = await generate_radarChartData(averages)
+  const averagesRadarChartOptions = {
+    elements: {
+      line: {
+        borderWidth: 3
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      r: {
+        max: 1,
+        min: 0,
+        ticks: {
+          stepSize: 0.2
+        }
+      }
+    }
+  }
+
   root.render(
     <div>
       <App />
+      <p> average song stats </p>
+      <div id="average_stats" style={{width:"600px", height:"600px"}}>
+        <Radar data={averagesRadarChartData} options={averagesRadarChartOptions} />
+      </div>
+      <br></br>
       <p> artists that appear 3 or more times </p>
       <div id="artists_that_appear_n_times" style={{width:"300px", height:"300px"}}>
         <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
@@ -91,7 +120,28 @@ async function get_and_render_top_songs_data(access_token) {
 
   const averages = await calculate_average_stats(access_token, songs)
   const averagesRadarChartData = await generate_radarChartData(averages)
-  const averagesRadarChartOptions = {elements: {line: {borderWidth: 3}}, plugins: {legend: {display: false}}}
+  const averagesRadarChartOptions = {
+    elements: {
+      line: {
+        borderWidth: 3
+      }
+    },
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      r: {
+        max: 1,
+        min: 0,
+        ticks: {
+          stepSize: 0.2
+        }
+      }
+    }
+  }
+
   console.log(averages)
   // options allow us to hide labels on popularity bar chart
   const popularities_chart_options = {
@@ -117,6 +167,7 @@ async function get_and_render_top_songs_data(access_token) {
       <div id="average_stats" style={{width:"600px", height:"600px"}}>
         <Radar data={averagesRadarChartData} options={averagesRadarChartOptions} />
       </div>
+      <br></br>
       <p> artists' appearences in top 50 songs </p>
       <div id="artists_in_top_fifty_songs" style={{width:"300px", height:"300px"}}>
         <Doughnut data={artistsDonutChartData} options={artistsDonutChartOptions} />
@@ -534,6 +585,68 @@ async function generate_followerCountBarChartData(artists_ordered_by_follower_co
   return data
 }
 
+async function calculate_averages_for_all_saved_tracks(access_token, all_saved_tracks) {
+  // TODO: get averages of stats for all saved songs
+  //   1. split all_saved_tracks into subarrays of size 100 or less
+  //   2. call calculate_average_stats on each subarray and save the averages
+  //   3. get average of all the averages returned
+
+  // I am so proud of how I made an array of promises here STUDY HOW I DID THIS!!!
+
+  // we have to split into batches because spotify's api can only return data on up to 100 songs at once
+  // split into batches of size 100 or less
+  let batches_of_one_hundred_songs = new Array(0)
+  let temp = new Array(0)
+  for (let i = 0; i < all_saved_tracks.length; i++) {
+    temp.push(all_saved_tracks[i])
+    if (((i+1) % 100) === 0) {
+      batches_of_one_hundred_songs.push(temp)
+      temp = []
+    }
+  }
+  if (temp.length > 0) {
+    batches_of_one_hundred_songs.push(temp)
+  }
+
+  let averages = {
+    "acousticness": 0,
+    "danceability": 0,
+    "energy": 0,
+    //"instrumentalness": new Array(0),
+    //"liveness": new Array(0),
+    "mode": 0,
+    //"speechiness": new Array(0),
+    "valence": 0
+  }
+
+  let promises = new Array(0)
+  // add up the averages for each batch
+  batches_of_one_hundred_songs.forEach(batch => {
+    let batch_averages = calculate_average_stats(access_token, batch)
+    promises.push(batch_averages)
+  })
+  
+  let averages_for_each_batch = await Promise.all(promises)
+  averages_for_each_batch.forEach(batch_averages => {
+    averages["acousticness"] += batch_averages["acousticness"]
+    averages["danceability"] += batch_averages["danceability"]
+    averages["energy"] += batch_averages["energy"]
+    averages["mode"] += batch_averages["mode"]
+    averages["valence"] += batch_averages["valence"]
+  })
+
+  // now we just need to divide each of the sums, and then we have our averages
+  let num_batches = batches_of_one_hundred_songs.length
+  Object.keys(averages).forEach(stat => {
+    averages[stat] /= num_batches
+    averages[stat] = Math.round(averages[stat]*100)/100  // this rounds to 2 decimal places
+  })
+  
+  return averages
+}
+
+
+
 
 async function calculate_average_stats(access_token, song_list) {
   // returns average of all 9 stats
@@ -549,10 +662,10 @@ async function calculate_average_stats(access_token, song_list) {
     "acousticness": new Array(0),
     "danceability": new Array(0),
     "energy": new Array(0),
-    "instrumentalness": new Array(0),
-    "liveness": new Array(0),
+    //"instrumentalness": new Array(0),
+    //"liveness": new Array(0),
     "mode": new Array(0),
-    "speechiness": new Array(0),
+    //"speechiness": new Array(0),
     "valence": new Array(0)
   }
 
@@ -580,10 +693,10 @@ async function calculate_average_stats(access_token, song_list) {
       averages["acousticness"].push(stats["acousticness"])
       averages["danceability"].push(stats["danceability"])
       averages["energy"].push(stats["energy"])
-      averages["instrumentalness"].push(stats["instrumentalness"])
-      averages["liveness"].push(stats["liveness"])
+      //averages["instrumentalness"].push(stats["instrumentalness"])
+      //averages["liveness"].push(stats["liveness"])
       averages["mode"].push(stats["mode"])
-      averages["speechiness"].push(stats["speechiness"])
+      //averages["speechiness"].push(stats["speechiness"])
       averages["valence"].push(stats["valence"])
     })
   })
