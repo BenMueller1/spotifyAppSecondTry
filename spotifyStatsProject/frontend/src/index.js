@@ -31,17 +31,32 @@ root.render(
 
 document.addEventListener('DOMContentLoaded', async () => {
   await get_auth_url()
+  console.log(window.sessionStorage)
+  document.getElementById("content_if_logged_in").style.display = "none"
 
-  // if we have just been redirected to this page from the authorization callback function, this will get the user's current token
-  const most_recent_token = await axios.get(API_URL + '/get-most-recently-added-token').then(response => response.data)
-  // most_recent_token will be a json object with fields id, created_at, refresh_token, access_token, token_type, expires_in
-  // or if there are no tokens in database the promise will return with status 404 and the only field in most_recent_token will be a field called error
-  const access_token = most_recent_token['access_token']
-  //document.getElementById('display_token').innerHTML += access_token
-  document.getElementById('top_artists').onclick = async () => await get_and_render_top_artists_data(access_token)
-  document.getElementById('top_songs').onclick = async () => await get_and_render_top_songs_data(access_token)
-  document.getElementById('saved_tracks').onclick = async () => await get_and_render_saved_tracks_data(access_token)
-  // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
+  document.getElementById("spotify_login").onclick =  () => {
+    // This might only work if I use localStorage
+    window.sessionStorage.setItem('loggedIn', 'true')
+  }
+
+  document.getElementById("spotify_logout").onclick = () => {
+    window.sessionStorage.setItem('loggedIn', 'false')
+  }
+
+  if (window.sessionStorage.getItem('loggedIn') === 'true') {
+    document.getElementById("spotify_login").style.display = "none"
+    document.getElementById("content_if_logged_in").style.display = "inline"
+    // if we have just been redirected to this page from the authorization callback function, this will get the user's current token
+    const most_recent_token = await axios.get(API_URL + '/get-most-recently-added-token').then(response => response.data)
+    // most_recent_token will be a json object with fields id, created_at, refresh_token, access_token, token_type, expires_in
+    // or if there are no tokens in database the promise will return with status 404 and the only field in most_recent_token will be a field called error
+    const access_token = most_recent_token['access_token']
+    //document.getElementById('display_token').innerHTML += access_token
+    document.getElementById('top_artists').onclick = async () => await get_and_render_top_artists_data(access_token)
+    document.getElementById('top_songs').onclick = async () => await get_and_render_top_songs_data(access_token)
+    document.getElementById('saved_tracks').onclick = async () => await get_and_render_saved_tracks_data(access_token)
+    // check if most_recent_token doesn't have a field called error, if this is true we can extract the access & refresh tokens out of it
+  }
 })
 
 async function get_and_render_saved_tracks_data(access_token) {
