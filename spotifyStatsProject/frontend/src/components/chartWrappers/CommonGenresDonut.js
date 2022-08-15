@@ -96,8 +96,7 @@ async function get_top_n_genres(artists, n) {
         genre_counts[genre] = 1
       }
     })
-  
-    console.log(genre_counts)
+
   
     // now I just need to figure out a way to return the n genres with highest occurrences in genre_counts
     let top_n_genres = {}
@@ -116,7 +115,6 @@ async function get_top_n_genres(artists, n) {
       })
     }
   
-    console.log(top_n_genres)
     return top_n_genres
 }
 
