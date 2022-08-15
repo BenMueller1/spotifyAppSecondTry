@@ -14,15 +14,15 @@ function SavedSongsData(props) {
 
     return (
         <div id="saved_songs_data">
-            <h5>React Average stats for all saved</h5>
+            <h5>Average Song Stats</h5>
             <SongStatsRadar access_token={access_token} top_fifty={false}/>
             <br></br>
 
-            <h5>React artist appearences donut for all saved</h5>
+            <h5>Artist Appearences</h5>
             <ArtistAppsDonut access_token={access_token} top_fifty={false}/>
             <br></br>
 
-            <h5> react explicit pie for all saved</h5>
+            <h5>Explicitness</h5>
             <ExplicitPie access_token={access_token} top_fifty={false}/>
         </div>
     )
