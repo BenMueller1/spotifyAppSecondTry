@@ -2,6 +2,7 @@ import '../static/App.css';
 import React from 'react';
 import ExplicitPie from '../components/chartWrappers/ExplicitPie'
 import ArtistAppsDonut from './chartWrappers/ArtistAppsDonut';
+import FollowedBar from './chartWrappers/FollowedBar'
 
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -19,6 +20,10 @@ function App(props) {
       <ArtistAppsDonut access_token={access_token} top_fifty={true}/>
       <h5>React artist appearences donut for all saved</h5>
       <ArtistAppsDonut access_token={access_token} top_fifty={false}/>
+      <h5>React Top 10 most followed in top 50</h5>
+      <FollowedBar access_token={access_token} top_ten={true}/>
+      <h5>React Top 10 least followed in top 50</h5>
+      <FollowedBar access_token={access_token} top_ten={false}/>
       <p> hi this is the main app component, in the future the charts will be child components of their chart wrappers which will be children of this App component </p>
     </div>
   );
