@@ -1,57 +1,97 @@
 import '../static/App.css';
+
 import React from 'react';
-import ExplicitPie from '../components/chartWrappers/ExplicitPie'
-import ArtistAppsDonut from './chartWrappers/ArtistAppsDonut'
-import FollowedBar from './chartWrappers/FollowedBar'
-import SongStatsRadar from './chartWrappers/SongStatsRadar'
-import PopBar from './chartWrappers/PopBar';
-import CommonGenresDonut from './chartWrappers/CommonGenresDonut';
-import TopFifty from './TopFifty';
+
+import ExplicitPie from './thirdLevel/chartWrappers/ExplicitPie'
+import ArtistAppsDonut from './thirdLevel/chartWrappers/ArtistAppsDonut'
+import FollowedBar from './thirdLevel/chartWrappers/FollowedBar'
+import SongStatsRadar from './thirdLevel/chartWrappers/SongStatsRadar'
+import PopBar from './thirdLevel/chartWrappers/PopBar';
+import CommonGenresDonut from './thirdLevel/chartWrappers/CommonGenresDonut';
+import TopFiftySongsList from './secondLevel/TopFiftySongsList';
+import TopFiftyArtistsList from './secondLevel/TopFiftyArtistsList';
+
+import TopFiftyArtistsData from './secondLevel/TopFiftyArtistsData';
+import TopFiftySongsData from './secondLevel/TopFiftySongsData';
+import SavedSongsData from './secondLevel/SavedSongsData';
 
 import { Chart, registerables } from 'chart.js';
+
 Chart.register(...registerables);
 
 function App(props) {
   let access_token = props["access_token"]
+  let root = props["root"]
+
+  function render_top_artists_data() {
+    root.render(
+      <div id="app">
+        <button id="top_songs" onClick={render_top_songs_data}>get data on top 50 songs</button>
+        <button id="saved_tracks" onClick={render_saved_songs_data}>get data on your saved tracks (note: could take a little time if you have a lot)</button>
+        <button id="top_fifty_songs_button" onClick={render_top_fifty_songs}>see top fifty songs</button>
+        <button id="top_fifty_songs_artists" onClick={render_top_fifty_artists}>see top fifty artists</button>
+        <TopFiftyArtistsData access_token={access_token}/>
+      </div>
+    )
+  }
+
+  function render_top_songs_data() {
+    root.render(
+    <div id="app">
+      <button id="top_artists" onClick={render_top_artists_data}>get data on top 50 artists</button>
+      <button id="saved_tracks" onClick={render_saved_songs_data}>get data on your saved tracks (note: could take a little time if you have a lot)</button>
+      <button id="top_fifty_songs_button" onClick={render_top_fifty_songs}>see top fifty songs</button>
+      <button id="top_fifty_songs_artists" onClick={render_top_fifty_artists}>see top fifty artists</button>
+      <TopFiftySongsData access_token={access_token}/>
+    </div>)
+  }
+
+  function render_saved_songs_data() {
+    root.render(
+      <div id="app">
+        <button id="top_artists" onClick={render_top_artists_data}>get data on top 50 artists</button>
+        <button id="top_songs" onClick={render_top_songs_data}>get data on top 50 songs</button>
+        <button id="top_fifty_songs_button" onClick={render_top_fifty_songs}>see top fifty songs</button>
+        <button id="top_fifty_songs_artists" onClick={render_top_fifty_artists}>see top fifty artists</button>
+        <SavedSongsData access_token={access_token}/>
+      </div>
+    )
+  }
+
+  function render_top_fifty_songs() {
+    root.render(
+      <div id="app">
+        <button id="top_artists" onClick={render_top_artists_data}>get data on top 50 artists</button>
+        <button id="top_songs" onClick={render_top_songs_data}>get data on top 50 songs</button>
+        <button id="saved_tracks" onClick={render_saved_songs_data}>get data on your saved tracks (note: could take a little time if you have a lot)</button>
+        <button id="top_fifty_songs_artists" onClick={render_top_fifty_artists}>see top fifty artists</button>
+        <TopFiftySongsList access_token={access_token}/>
+      </div>
+    )
+  }
+
+  function render_top_fifty_artists() {
+    root.render(
+      <div id="app">
+        <button id="top_artists" onClick={render_top_artists_data}>get data on top 50 artists</button>
+        <button id="top_songs" onClick={render_top_songs_data}>get data on top 50 songs</button>
+        <button id="saved_tracks" onClick={render_saved_songs_data}>get data on your saved tracks (note: could take a little time if you have a lot)</button>
+        <button id="top_fifty_songs_button" onClick={render_top_fifty_songs}>see top fifty songs</button>
+        <TopFiftyArtistsList access_token={access_token} songs_bool={false}/>
+      </div>
+    )
+  }
+
 
   return (
     <div id="app">
-      <h5> react explicit pie for top fifty</h5>
-      <ExplicitPie access_token={access_token} top_fifty={true}/>
-      <h5> react explicit pie for all saved</h5>
-      <ExplicitPie access_token={access_token} top_fifty={false}/>
-
-      <h5>React artist appearences donut for top fifty</h5>
-      <ArtistAppsDonut access_token={access_token} top_fifty={true}/>
-      <h5>React artist appearences donut for all saved</h5>
-      <ArtistAppsDonut access_token={access_token} top_fifty={false}/>
-
-      <h5>React Top 10 most followed in top 50</h5>
-      <FollowedBar access_token={access_token} top_ten={true}/>
-      <h5>React Top 10 least followed in top 50</h5>
-      <FollowedBar access_token={access_token} top_ten={false}/>
-
-      <h5>React Average stats for top fifty</h5>
-      <SongStatsRadar access_token={access_token} top_fifty={true}/>
-      <h5>React Average stats for all saved</h5>
-      <SongStatsRadar access_token={access_token} top_fifty={false}/>
-
-      <h5>React global popularities of top 50 artists</h5>
-      <PopBar access_token={access_token} artists_bool={true}/>
-      <h5>React global popularities of top 50 songs</h5>
-      <PopBar access_token={access_token} artists_bool={false}/>
-
-      <h5>React most frequent genres among top 50 artists</h5>
-      <CommonGenresDonut access_token={access_token}/>
-
-      <h5>React top 50 artists</h5>
-      <TopFifty access_token={access_token} songs_bool={false}/>
-      <h5>React top 50 songs</h5>
-      <TopFifty access_token={access_token} songs_bool={true}/>
-
-      <p> hi this is the main app component, in the future the charts will be child components of their chart wrappers which will be children of this App component </p>
+      <button id="top_artists" onClick={render_top_artists_data}>get data on top 50 artists</button>
+      <button id="top_songs" onClick={render_top_songs_data}>get data on top 50 songs</button>
+      <button id="saved_tracks" onClick={render_saved_songs_data}>get data on your saved tracks (note: could take a little time if you have a lot)</button>
+      <button id="top_fifty_songs_button" onClick={render_top_fifty_songs}>see top fifty songs</button>
+      <button id="top_fifty_songs_artists" onClick={render_top_fifty_artists}>see top fifty artists</button>
     </div>
-  );
+  )
 }
 
 export default App;

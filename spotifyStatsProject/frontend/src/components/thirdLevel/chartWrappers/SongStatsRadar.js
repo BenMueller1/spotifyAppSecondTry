@@ -1,4 +1,4 @@
-import {SPOTIFY_BASE_URL, API_URL} from '../../constants/constants'
+import {SPOTIFY_BASE_URL, API_URL} from '../../../constants/constants'
 import React, { useEffect, useState } from 'react';
 import { Radar } from "react-chartjs-2"
 import { Chart, registerables } from 'chart.js';

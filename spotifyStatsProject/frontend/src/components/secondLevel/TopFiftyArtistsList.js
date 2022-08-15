@@ -1,10 +1,10 @@
-import {SPOTIFY_BASE_URL, API_URL} from '../constants/constants'
+import {SPOTIFY_BASE_URL, API_URL} from '../../constants/constants'
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'
 
 // FIND A CSS FRAMEWORK WITH REALLY NICE LISTS
 
-function TopFifty(props) {
+function TopFiftyArtistsList(props) {
     // get props
     let access_token = props["access_token"]
     let songs_bool = props["songs_bool"] // true: show top 50 songs, false: show top 50 artists
@@ -12,30 +12,18 @@ function TopFifty(props) {
     // initialize state
     const [isBusy, setBusy] = useState(true);
     const [state, setState] = useState({})
-
+    console.log(songs_bool)
     // use effect hook to call functions to get and generate data (don't forget [] so it's only called on first render)
     useEffect(() => {
         const fetchAndProcessData = async () => {
             let div_id = ""
             let top_fifty = new Array(0)
-            if (songs_bool) {
-                div_id = "top_fifty_songs"
+            div_id = "top_fifty_artists"
 
-                const returned_data = await get_users_top_items("tracks", 50, "long_term", access_token)
-                const songs = returned_data['items']
-                const popularities = await get_songs_popularities(songs)
-                top_fifty = Object.keys(popularities)
-
-            }
-            else {
-                div_id = "top_fifty_artists"
-
-                const returned_data = await get_users_top_items("artists", 50, "long_term", access_token)
-                const artists = returned_data['items'] 
-                const popularities = await get_artists_popularities(artists)
-                top_fifty = Object.keys(popularities)
-
-            }
+            const returned_data = await get_users_top_items("artists", 50, "long_term", access_token)
+            const artists = returned_data['items'] 
+            const popularities = await get_artists_popularities(artists)
+            top_fifty = Object.keys(popularities)
 
             // set the state equal to the new data inside of this function
             setState({"top_fifty": top_fifty, "div_id": div_id, "ol_id": div_id + '_list'})
@@ -132,4 +120,4 @@ async function get_songs_popularities(songs) {
 
 
 
-export default TopFifty
+export default TopFiftyArtistsList

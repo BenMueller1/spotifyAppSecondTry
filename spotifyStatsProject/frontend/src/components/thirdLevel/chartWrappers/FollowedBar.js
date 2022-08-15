@@ -1,7 +1,7 @@
-import {SPOTIFY_BASE_URL, API_URL} from '../../constants/constants'
+import {SPOTIFY_BASE_URL, API_URL} from '../../../constants/constants'
 import React, { useEffect, useState } from 'react';
 import { Bar } from "react-chartjs-2"
-import PriorityQueue from '../../dataStructures/pq';
+import PriorityQueue from '../../../dataStructures/pq';
 import { Chart, registerables } from 'chart.js';
 import axios from 'axios'
 Chart.register(...registerables);
