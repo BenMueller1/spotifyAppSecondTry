@@ -148,4 +148,4 @@ async function get_users_top_items(category, num_items, time_range, access_token
     })
     .then(response => response.data)
     return items
-  }
+}

@@ -5,6 +5,7 @@ import ArtistAppsDonut from './chartWrappers/ArtistAppsDonut'
 import FollowedBar from './chartWrappers/FollowedBar'
 import SongStatsRadar from './chartWrappers/SongStatsRadar'
 import PopBar from './chartWrappers/PopBar';
+import CommonGenresDonut from './chartWrappers/CommonGenresDonut';
 
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
@@ -38,6 +39,9 @@ function App(props) {
       <PopBar access_token={access_token} artists_bool={true}/>
       <h5>React global popularities of top 50 songs</h5>
       <PopBar access_token={access_token} artists_bool={false}/>
+
+      <h5>React most frequent genres among top 50 artists</h5>
+      <CommonGenresDonut access_token={access_token}/>
 
       <p> hi this is the main app component, in the future the charts will be child components of their chart wrappers which will be children of this App component </p>
     </div>
