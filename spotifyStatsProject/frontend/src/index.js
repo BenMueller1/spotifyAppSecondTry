@@ -9,8 +9,7 @@ import axios from 'axios';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import 'chart.js/auto';
-import { PolarArea, Doughnut, Bar, Pie, Radar } from "react-chartjs-2"
-import PolarAreaChart from './charts/PolarArea'
+import { Doughnut, Bar, Pie, Radar } from "react-chartjs-2"
 
 
 import { Chart, registerables } from 'chart.js';
@@ -22,11 +21,7 @@ const API_URL = "http://localhost:8000/api"  // this is the link to my api, upda
 const SPOTIFY_BASE_URL = "https://api.spotify.com/v1/me"
 
 var root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -96,7 +91,7 @@ async function get_and_render_saved_tracks_data(access_token) {
 
   root.render(
     <div>
-      <App />
+      <App access_token={access_token}/>
       <p> average song stats </p>
       <div id="average_stats" style={{width:"600px", height:"600px"}}>
         <Radar data={averagesRadarChartData} options={averagesRadarChartOptions} />
@@ -177,7 +172,7 @@ async function get_and_render_top_songs_data(access_token) {
 
   root.render(
     <div>
-      <App />
+      <App access_token={access_token}/>
       <p> average song stats </p>
       <div id="average_stats" style={{width:"600px", height:"600px"}}>
         <Radar data={averagesRadarChartData} options={averagesRadarChartOptions} />
@@ -240,7 +235,7 @@ async function get_and_render_top_artists_data(access_token)  {
   // const pie_chart_div = ReactDOM.createRoot(document.getElementById('genres_pie_chart'));
   root.render(
     <div>
-      <App />
+      <App access_token={access_token}/>
       <p> most common genres among your top 50 artists of all time: </p>
       <div id="genres_polar_chart" style={{width:"500px", height:"500px"}}>
         <Doughnut data={genresPolarChartData} /*updateMode="resize"*/ />
@@ -727,8 +722,11 @@ async function calculate_average_stats(access_token, song_list) {
 
 async function generate_radarChartData(dat) {
   // dat is a json object
+
+  // labels shouldnt be hardcoded, I should change it to this line later
+  // let labels = Object.values(dat)
   const graph_data = {
-    labels: Object.keys(dat),
+    labels: ["acousticness", "danceability", "energy", "mode (1=major, 0-minor)", "valence (1=happy, 0=sad)"],
     datasets: [{
       label: 'Average value',
       data: Object.values(dat),
