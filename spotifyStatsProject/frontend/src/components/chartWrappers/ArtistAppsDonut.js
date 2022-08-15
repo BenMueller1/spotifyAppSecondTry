@@ -44,14 +44,14 @@ function ArtistAppsDonut(props) {
     // now pass the data and the options to the correct react-chartjs-2 component 
     if (isBusy) {
         return (
-            <div id="ArtistAppsPie" style={{width:"300px", height:"300px"}}>
+            <div id="ArtistAppsDonut" style={{width:"300px", height:"300px"}}>
                 <h4>fetching data...</h4>
             </div>
         )
     } 
     else {
         return (
-            <div id="ArtistAppsPie" style={{width:"300px", height:"300px"}}>
+            <div id="ArtistAppsDonut" style={{width:"300px", height:"300px"}}>
                 <Doughnut data={state["graph_data"]} options={state["options"]}/>
             </div>
         )
